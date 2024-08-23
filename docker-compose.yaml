@@ -25,6 +25,11 @@ services:
     environment:
       - 'OLLAMA_BASE_URL=http://ollama:11434'
       - 'WEBUI_SECRET_KEY='
+      - 'TWITTER_API_KEY=pHcosC1B0y1c6jDes1eq81EgY'
+      - 'TWITTER_API_SECRET_KEY=R4muhwWBbKxhlhsnWBUHk6TIzZNsR4Ke9BUyGKo09t54V9RGN9'
+      - 'TWITTER_ACCESS_TOKEN=1826078366417477632-hjzD7uhSpC3m6sDstYoy1E0X18UaP9'
+      - 'TWITTER_ACCESS_TOKEN_SECRET=s5ABkzeK0h5vNS9DvffqLOMv2hs1RBJWDv0mrVnSrmSol'
+      - 'TWITTER_BEARER_TOKEN=AAAAAAAAAAAAAAAAAAAAAGXivQEAAAAA8%2FGbNLUQH9xXU4E4nbXIMEpbwhQ%3DwKTSvXHd7VbP9ItF5KAUyc5ZzUnNCZpYQJcjGR6HajtGN3gGSM'
     extra_hosts:
       - host.docker.internal:host-gateway
     restart: unless-stopped

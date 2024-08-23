@@ -1,0 +1,64 @@
+name: open-webui-dev
+
+services:
+  ollama:
+    volumes:
+      - ollama:/root/.ollama
+    container_name: ollama
+    pull_policy: always
+    tty: true
+    restart: always
+    image: ollama/ollama:${OLLAMA_DOCKER_TAG-latest}
+
+  frontend:
+    build:
+      context: .
+      target: build
+    command: ["npm", "run", "dev"]
+    depends_on:
+      - backend
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    ports:
+      - "3000:5173"
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /app/src
+        - action: rebuild
+          path: package.json
+
+  backend:
+    build:
+      context: .
+      target: base
+    command: ["bash", "dev.sh"]
+    env_file: ".env"
+    environment:
+      - ENV=dev
+      - WEBUI_AUTH=False
+      - 'TWITTER_API_KEY=47EoRv2nAMV7jG63UcI1jUr79'
+      - 'TWITTER_API_SECRET_KEY=543mdcl34xJW9iq88WqTgQGQaiDj5fDhLsUjh43X6fKArRjWmU'
+      - 'TWITTER_ACCESS_TOKEN=1826078366417477632-8tFnRBx1HpkyIQ0gPRh31RJU7JmE4I'
+      - 'TWITTER_ACCESS_TOKEN_SECRET=dxEVinjRU0myybwYaE9cKpmo1ZohSShSg9qlE6Z98mCNN'
+    volumes:
+      - data:/app/backend/data
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    ports:
+      - "8080:8080"
+    restart: always
+    develop:
+      watch:
+        - action: sync
+          path: ./backend
+          target: /app/backend
+          ignore:
+            - backend/data
+        - action: rebuild
+          path: backend/requirements.txt
+
+volumes:
+  data: {}
+  ollama: {}

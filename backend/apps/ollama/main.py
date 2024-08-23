@@ -11,6 +11,7 @@ from fastapi.responses import StreamingResponse
 
 from pydantic import BaseModel, ConfigDict
 
+import tweepy
 import os
 import re
 import random
@@ -713,6 +714,12 @@ def get_ollama_url(url_idx: Optional[int], model: str):
     url = app.state.config.OLLAMA_BASE_URLS[url_idx]
     return url
 
+client = tweepy.Client(bearer_token = os.getenv("TWITTER_ACCESS_TOKEN_SECRET"), consumer_key = os.getenv("TWITTER_API_KEY"), consumer_secret = os.getenv("TWITTER_API_SECRET_KEY"), access_token = os.getenv("TWITTER_ACCESS_TOKEN"), access_token_secret = os.getenv("TWITTER_ACCESS_TOKEN_SECRET"))
+
+def contains_send_keywords(content: str) -> bool:
+   verbs = ["send", "post", "share"]
+   nouns = ["twitter", "x", "account"]
+   return any(verb in content.lower() for verb in verbs) and any(noun in content.lower() for noun in nouns)
 
 @app.post("/api/chat")
 @app.post("/api/chat/{url_idx}")
@@ -754,6 +761,28 @@ async def generate_chat_completion(
     log.info(f"url: {url}")
     log.debug(payload)
 
+     # Determine if we need to send to Twitter based on the last user message
+    if contains_send_keywords(payload['messages'][-1]['content']) and len(payload['messages']) >= 2:
+       tweet = f"@airepublic_hire AI Republic said: {payload['messages'][-2]['content']}"
+
+
+       authorization_message = {
+           "role": "user",
+           "content": "The user has authorized you to send the previous generated response "
+                       "to Twitter. Generate a response that simply says: "
+                       "'Sending the answer to Twitter account, done."
+       }
+       payload['messages'].append(authorization_message)
+       try:
+           # twitter_api.update_status(tweet)
+           response = client.create_tweet(text = tweet)
+           log.info(f"twitter res:{response}")
+           # payload['messages'].append({
+           #     "role": "assistant",
+           #     "content": "The answer has been posted to Twitter successfully."
+           # })
+       except tweepy.errors.TweepyException as e:
+           raise HTTPException(status_code=500, detail=f"Twitter error: {str(e)}")
     return await post_streaming_url(f"{url}/api/chat", json.dumps(payload))
 
 
